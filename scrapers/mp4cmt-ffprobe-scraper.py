@@ -49,7 +49,7 @@ def parse_comment(comment_text):
         "performers": []
     }
     
-    url_match = re.search(r'(https://[^\s]+)', comment_text)
+    url_match = re.search(r'(https://[^\s\]]+)', comment_text)
     if url_match:
         result["url"] = url_match.group(1)
     
@@ -65,6 +65,7 @@ def parse_comment(comment_text):
     details = comment_text
     if result["url"]:
         details = details.replace(result["url"], "")
+        details = details.replace("#URL-[]", "")
     details = re.sub(r'### Tags ###.*$', '', details, flags=re.DOTALL)
     details = re.sub(r'__perf-\s*\([^)]+\)\s*__', '', details)
     details = re.sub(r'\n\s*\n', '\n\n', details.strip())
@@ -143,10 +144,10 @@ def main():
         
         parsed = None
         if not comment_text:
-            debug_print("No comment field found in file")
-            parsed = {"details": "", "url": "", "tags": [], "performers": []}
-        else:
-            parsed = parse_comment(comment_text)
+            debug_print("Error: No metadata found in file")
+            sys.exit(1)
+
+        parsed = parse_comment(comment_text)
         
         output = {
             "title": None,

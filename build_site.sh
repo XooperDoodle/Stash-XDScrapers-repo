@@ -16,11 +16,6 @@ fi
 rm -rf "$outdir"
 mkdir -p "$outdir"
 
-# ---- MINIMUM FIX ----
-# prevent globs expanding to literal when no matches
-shopt -s nullglob
-# ---------------------
-
 buildScraper() 
 {
     f=$1

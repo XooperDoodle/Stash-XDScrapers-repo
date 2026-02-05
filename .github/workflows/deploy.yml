@@ -1,38 +1,41 @@
-#!/usr/bin/env bash
-set -euo pipefail
+name: Deploy repository to Github Pages
 
-OUT_DIR="$1"
-mkdir -p "$OUT_DIR"
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'scrapers/**'
+  workflow_dispatch:
 
-INDEX="$OUT_DIR/index.yml"
+permissions:
+  contents: read
+  pages: write
+  id-token: write
 
-# ---- FIX ----
-# Prevent *.zip from expanding to literal when empty
-shopt -s nullglob
-# ----------------------
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: '0'
 
-# Start fresh
-: > "$INDEX"
+      - name: Build site
+        run: |
+          chmod +x build_site.sh
+          ./build_site.sh _site
 
-# Collect zip files
-zips=( *.zip )
+      - uses: actions/upload-pages-artifact@v3
 
-# If no zip files, exit cleanly (do NOT write placeholder)
-if [ ${#zips[@]} -eq 0 ]; then
-  exit 0
-fi
-
-for zip in "${zips[@]}"; do
-  id="${zip%.zip}"
-  sha="$(sha256sum "$zip" | awk '{print $1}')"
-
-  cat >> "$INDEX" <<EOF
-- id: $id
-  name: $id
-  version: $(git rev-parse --short HEAD)
-  date: $(date '+%Y-%m-%d %H:%M:%S')
-  path: $zip
-  sha256: $sha
-
-EOF
-done
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}index.yml
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

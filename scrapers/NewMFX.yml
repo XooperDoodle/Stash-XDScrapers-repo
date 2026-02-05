@@ -1,0 +1,82 @@
+name: NewMFX
+
+performerByName:
+  action: scrapeXPath
+  queryURL: https://newmfx.com/search?text={}
+  scraper: performerSearch
+
+performerByFragment:
+  action: scrapeXPath
+  queryURL: "{url}"
+  scraper: performerScraper
+
+performerByURL:
+  - action: scrapeXPath
+    url:
+      - newmfx.com/cast/
+    scraper: performerScraper
+
+xPathScrapers:
+  performerSearch:
+    common:
+      $castLinks: //a[contains(@href, '/cast/')]
+    performer:
+      Name:
+        selector: $castLinks/text()
+        postProcess:
+          - replace:
+              - regex: '^\s+|\s+$'
+                with: ""
+      URL: $castLinks/@href
+
+  performerScraper:
+    common:
+      $profile: //section[contains(@class, 'data-cast')]
+      $stats: $profile//div[contains(@class, 'topics-cast')]/ul/li
+    performer:
+      Name: //div[contains(@class, 'box-title-video')]/h1/text()
+      Image: $profile//div[@class='box-image']/img/@src
+      Height:
+        selector: $stats[strong[contains(text(), 'Height')]]/text()[normalize-space()]
+        postProcess:
+          - replace:
+              - regex: '(\d+)\s*cm.*'
+                with: $1
+      Weight:
+        selector: $stats[strong[contains(text(), 'Weight')]]/text()[normalize-space()]
+        postProcess:
+          - replace:
+              - regex: '(\d+)\s*kg.*'
+                with: $1
+      HairColor:
+        selector: $stats[strong[contains(text(), 'Hair Color')]]/text()[normalize-space()]
+        postProcess:
+          - replace:
+              - regex: '^\s*:\s*'
+                with: ""
+      EyeColor:
+        selector: $stats[strong[contains(text(), 'Eyes Color')]]/text()[normalize-space()]
+        postProcess:
+          - replace:
+              - regex: '^\s*:\s*'
+                with: ""
+      Tattoos:
+        selector: $stats[strong[contains(text(), 'Tatoo')]]/text()[normalize-space()]
+        postProcess:
+          - replace:
+              - regex: '^\s*:\s*'
+                with: ""
+      Details:
+        selector: $stats
+        concat: " | "
+        postProcess:
+          - replace:
+              - regex: '\s+'
+                with: " "
+
+driver:
+  useCDP: true
+  sleep: 2
+
+debug:
+  printHTML: true

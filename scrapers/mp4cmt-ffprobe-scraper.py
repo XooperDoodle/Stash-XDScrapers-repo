@@ -5,7 +5,7 @@ import subprocess
 import re
 from pathlib import Path
 
-__version__ = "1.2"
+__version__ = "1.3"
 
 def debug_print(msg):
     """Write debug messages to stderr as expected by Stash"""
@@ -49,7 +49,7 @@ def parse_comment(comment_text):
         "performers": []
     }
     
-    url_match = re.search(r'(https://[^\s]+)', comment_text)
+    url_match = re.search(r'(https://[^\s\]]+)', comment_text)
     if url_match:
         result["url"] = url_match.group(1)
     
@@ -64,7 +64,10 @@ def parse_comment(comment_text):
     
     details = comment_text
     if result["url"]:
-        details = details.replace(result["url"], "")
+        if f"#URL-[{result['url']}]" in details:
+            details = details.replace(f"#URL-[{result['url']}]", "")
+        else:
+            details = details.replace(result["url"], "")
     details = re.sub(r'### Tags ###.*$', '', details, flags=re.DOTALL)
     details = re.sub(r'__perf-\s*\([^)]+\)\s*__', '', details)
     details = re.sub(r'\n\s*\n', '\n\n', details.strip())

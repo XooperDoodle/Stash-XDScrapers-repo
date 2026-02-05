@@ -86,16 +86,16 @@ def main():
     }
 
     # Force UTF-8 for Stash communication
-    # Commented out to prevent potential issues on some systems
-    # try:
-    #     if hasattr(sys.stdin, 'reconfigure'):
-    #         sys.stdin.reconfigure(encoding='utf-8')
-    #     if hasattr(sys.stdout, 'reconfigure'):
-    #         sys.stdout.reconfigure(encoding='utf-8')
-    # except Exception as e:
-    #     debug_print(f"Failed to reconfigure streams: {e}")
+    try:
+        if hasattr(sys.stdin, 'reconfigure'):
+            sys.stdin.reconfigure(encoding='utf-8')
+        if hasattr(sys.stdout, 'reconfigure'):
+            sys.stdout.reconfigure(encoding='utf-8')
+    except Exception as e:
+        debug_print(f"Failed to reconfigure streams: {e}")
 
     try:
+        debug_print("Script started")
         try:
             input_content = sys.stdin.read()
             if not input_content:
@@ -159,6 +159,7 @@ def main():
             "tags": [{"name": name} for name in parsed["tags"]]
         }
         
+        debug_print("Printing final output")
         print(json.dumps(output, indent=2))
         sys.stdout.flush()
 

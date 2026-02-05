@@ -1,4 +1,4 @@
-name: MP4 metadata (ffprobe) scraper
+name: MP4 metadata (ffprobe) scraper v1.3
 sceneByFragment:  
   action: script  
   script:  

@@ -5,7 +5,7 @@ import subprocess
 import re
 from pathlib import Path
 
-__version__ = "1.3"
+__version__ = "1.2"
 
 def debug_print(msg):
     """Write debug messages to stderr as expected by Stash"""
@@ -49,7 +49,7 @@ def parse_comment(comment_text):
         "performers": []
     }
     
-    url_match = re.search(r'(https://[^\s\]]+)', comment_text)
+    url_match = re.search(r'(https://[^\s]+)', comment_text)
     if url_match:
         result["url"] = url_match.group(1)
     
@@ -64,10 +64,7 @@ def parse_comment(comment_text):
     
     details = comment_text
     if result["url"]:
-        if f"#URL-[{result['url']}]" in details:
-            details = details.replace(f"#URL-[{result['url']}]", "")
-        else:
-            details = details.replace(result["url"], "")
+        details = details.replace(result["url"], "")
     details = re.sub(r'### Tags ###.*$', '', details, flags=re.DOTALL)
     details = re.sub(r'__perf-\s*\([^)]+\)\s*__', '', details)
     details = re.sub(r'\n\s*\n', '\n\n', details.strip())
@@ -86,16 +83,16 @@ def main():
     }
 
     # Force UTF-8 for Stash communication
-    try:
-        if hasattr(sys.stdin, 'reconfigure'):
-            sys.stdin.reconfigure(encoding='utf-8')
-        if hasattr(sys.stdout, 'reconfigure'):
-            sys.stdout.reconfigure(encoding='utf-8')
-    except Exception as e:
-        debug_print(f"Failed to reconfigure streams: {e}")
+    # Commented out to prevent potential issues on some systems
+    # try:
+    #     if hasattr(sys.stdin, 'reconfigure'):
+    #         sys.stdin.reconfigure(encoding='utf-8')
+    #     if hasattr(sys.stdout, 'reconfigure'):
+    #         sys.stdout.reconfigure(encoding='utf-8')
+    # except Exception as e:
+    #     debug_print(f"Failed to reconfigure streams: {e}")
 
     try:
-        debug_print("Script started")
         try:
             input_content = sys.stdin.read()
             if not input_content:
@@ -159,7 +156,6 @@ def main():
             "tags": [{"name": name} for name in parsed["tags"]]
         }
         
-        debug_print("Printing final output")
         print(json.dumps(output, indent=2))
         sys.stdout.flush()
 

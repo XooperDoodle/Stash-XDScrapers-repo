@@ -1,0 +1,53 @@
+name: PMVHaven (fixed v2)
+sceneByURL:
+  - action: scrapeJson
+    url:
+      - pmvhaven.com/video/
+    queryURL: https://pmvhaven.com/api/videos/{url}/watch-page
+    queryURLReplace:
+      url:
+        - regex: .*([a-z0-9]{24}).*
+          with: $1
+    scraper: sceneScraper
+sceneByFragment:
+  action: script
+  script:
+    - python
+    - PMVHaven2.py
+    - sceneByFragment
+jsonScrapers:
+  sceneScraper:
+    scene:
+      Title: data.video.title
+      Date:
+        selector: data.video.uploadDate
+        postProcess:
+          - replace:
+              - regex: "T(.*)$"
+                with: ""
+          - parseDate: 2006-01-02
+
+      Details: data.video.description
+      Tags:
+        Name: data.video.tags
+      Performers:
+        Name:
+          selector: data.video.starsTags
+          split: ","
+      Image: data.video.thumbnailUrl
+      Studio:
+        Name: data.video.creator.0
+        URL:
+          selector: data.video.creatorUrl
+          postProcess:
+            - replace:
+                - regex: "^/(.*)"
+                  with: https://pmvhaven.com/$1
+      URL:
+        selector: data.video._id
+        postProcess:
+          - replace:
+              - regex: (.*)
+                with: https://pmvhaven.com/video/$1
+
+# Last Updated December 7, 2025

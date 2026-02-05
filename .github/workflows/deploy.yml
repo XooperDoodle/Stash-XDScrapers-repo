@@ -2,13 +2,13 @@ name: Deploy repository to Github Pages
 
 on:
   push:
-      paths:
-      - 'scrapers/**'
-      branches:
+    branches:
       - main
-  # Allows you to run this workflow manually from the Actions tab
+    paths:
+      - 'scrapers/**'
   workflow_dispatch:
-
+  # Allows you to run this workflow manually from the Actions tab
+  
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read

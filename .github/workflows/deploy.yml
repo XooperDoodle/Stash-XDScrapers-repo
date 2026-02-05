@@ -25,13 +25,13 @@ jobs:
         fetch-depth: '0'
     - run: |
         chmod +x build_site.sh    
-        ./build_site.sh _site/${{ github.ref_name }}
+        ./build_site.sh _site
     - uses: actions/upload-pages-artifact@v3
 
   deploy:
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}main/index.yml
+      url: ${{ steps.deployment.outputs.page_url }}/index.yml
     runs-on: ubuntu-latest
     needs: build
     steps:

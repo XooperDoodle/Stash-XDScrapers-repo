@@ -5,6 +5,8 @@ import subprocess
 import re
 from pathlib import Path
 
+__version__ = "1.2"
+
 def debug_print(msg):
     """Write debug messages to stderr as expected by Stash"""
     sys.stderr.write(str(msg) + "\n")
@@ -81,27 +83,30 @@ def main():
     }
 
     # Force UTF-8 for Stash communication
-    try:
-        if hasattr(sys.stdin, 'reconfigure'):
-            sys.stdin.reconfigure(encoding='utf-8')
-        if hasattr(sys.stdout, 'reconfigure'):
-            sys.stdout.reconfigure(encoding='utf-8')
-    except Exception as e:
-        debug_print(f"Failed to reconfigure streams: {e}")
+    # Commented out to prevent potential issues on some systems
+    # try:
+    #     if hasattr(sys.stdin, 'reconfigure'):
+    #         sys.stdin.reconfigure(encoding='utf-8')
+    #     if hasattr(sys.stdout, 'reconfigure'):
+    #         sys.stdout.reconfigure(encoding='utf-8')
+    # except Exception as e:
+    #     debug_print(f"Failed to reconfigure streams: {e}")
 
     try:
         try:
             input_content = sys.stdin.read()
             if not input_content:
-                # If no input, just print empty output and exit? Or is that an error?
-                # Usually Stash sends input. If manual run with no input, this handles it.
+                # If no input, just print empty output and exit
                 debug_print("No input provided to stdin")
                 print(json.dumps(output, indent=2))
+                sys.stdout.flush()
                 return
             input_data = json.loads(input_content)
+            debug_print(f"Received input structure: {list(input_data.keys())}")
         except Exception as e:
             debug_print(f"Failed to parse input JSON: {e}")
             print(json.dumps(output, indent=2))
+            sys.stdout.flush()
             return
 
         # Handle different input structures
@@ -117,16 +122,19 @@ def main():
         if not file_path:
             debug_print("No file path found in input")
             print(json.dumps(output, indent=2))
+            sys.stdout.flush()
             return
         
         if not Path(file_path).exists():
             debug_print(f"File not found: {file_path}")
             print(json.dumps(output, indent=2))
+            sys.stdout.flush()
             return
         
         probe_data = run_ffprobe(file_path)
         if not probe_data:
             print(json.dumps(output, indent=2))
+            sys.stdout.flush()
             return
         
         comment_text = None
@@ -149,11 +157,13 @@ def main():
         }
         
         print(json.dumps(output, indent=2))
+        sys.stdout.flush()
 
     except Exception as e:
         debug_print(f"Unexpected script error: {e}")
         # Print fallback output so Stash doesn't get EOF
         print(json.dumps(output, indent=2))
+        sys.stdout.flush()
 
 if __name__ == "__main__":
     main()

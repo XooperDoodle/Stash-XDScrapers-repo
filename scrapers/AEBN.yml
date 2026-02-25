@@ -18,7 +18,7 @@ sceneByFragment:
   queryURL: https://straight.aebn.com/straight/search?query={title}&type=movie
   scraper: sceneSearch
 
-# Scrape by URL (URL capability)
+# Scrape by URL
 sceneByURL:
   - action: scrapeXPath
     url:
@@ -28,13 +28,36 @@ sceneByURL:
       - gay.aebn.com/gay/scenes/
     scraper: sceneScraper
 
-# Group scraping
+# Group / Movie scraping
 groupByURL:
   - action: scrapeXPath
     url:
       - straight.aebn.com/straight/movies/
       - gay.aebn.com/gay/movies/
     scraper: groupScraper
+
+driver:
+  useCDP: true
+  sleep: 3
+  cookies:
+    - CookieURL: "https://straight.aebn.com"
+      Cookies:
+        - Name: "ageGated"
+          Domain: "straight.aebn.com"
+          Value: "1"
+          Path: "/"
+    - CookieURL: "https://gay.aebn.com"
+      Cookies:
+        - Name: "ageGated"
+          Domain: "gay.aebn.com"
+          Value: "1"
+          Path: "/"
+    - CookieURL: "https://vod.aebn.com"
+      Cookies:
+        - Name: "ageGated"
+          Domain: "vod.aebn.com"
+          Value: "1"
+          Path: "/"
 
 xPathScrapers:
   sceneSearch:
@@ -47,7 +70,7 @@ xPathScrapers:
         selector: $searchResult//a[contains(@href, "/movies/")]/@href
         postProcess:
           - replace:
-              - regex: ^(?!https?://)
+              - regex: "^(?!https?://)"
                 with: "https://straight.aebn.com"
 
   sceneScraper:
@@ -60,6 +83,8 @@ xPathScrapers:
           - replace:
               - regex: '^\s+|\s+$'
                 with: ""
+      URL:
+        fixed: "{inputURL}"
       Details:
         selector: //*[@class="dts-section-page-detail-description-body"]/text()
         concat: "\n"
@@ -84,7 +109,7 @@ xPathScrapers:
           selector: //*[@class="section-detail-list-item-studio"]/a/@href
           postProcess:
             - replace:
-                - regex: ^(?!https?://)
+                - regex: "^(?!https?://)"
                   with: "https://straight.aebn.com"
       Performers:
         Name:
@@ -144,7 +169,7 @@ xPathScrapers:
           selector: //*[@class="section-detail-list-item-studio"]/a/@href
           postProcess:
             - replace:
-                - regex: ^(?!https?://)
+                - regex: "^(?!https?://)"
                   with: "https://straight.aebn.com"
       FrontImage:
         selector: //*[@class="dts-movie-boxcover-front"]//img/@src
@@ -182,10 +207,6 @@ xPathScrapers:
                   with: ""
       URLs:
         fixed: "{inputURL}"
-
-driver:
-  useCDP: true
-  sleep: 3
 
 debug:
   printHTML: true

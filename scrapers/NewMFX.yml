@@ -1,0 +1,100 @@
+name: NewMFX
+
+# Search: CDP + cookies bypass age-gate; extract /cast/ performer links from scene result cards
+performerByName:
+  action: scrapeXPath
+  queryURL: https://newmfx.com/search?text={}
+  scraper: performerSearch
+
+# Fragment: XPath cannot be used here (Stash limitation) → Python script handles it
+performerByFragment:
+  action: script
+  script:
+    - python
+    - newmfx_scraper.py
+    - performerByFragment
+
+# URL: scrape a performer page directly from their /cast/ URL
+performerByURL:
+  - action: scrapeXPath
+    url:
+      - newmfx.com/cast/
+    scraper: performerScraper
+
+driver:
+  useCDP: true
+  sleep: 3
+  # Real laravel_session + XSRF-TOKEN cookies – bypasses age-gate entirely.
+  # Refresh these (~monthly) by exporting cookies from browser after visiting newmfx.com.
+  cookies:
+    - Cookies:
+        - Name: "laravel_session"
+          Domain: "newmfx.com"
+          Value: "eyJpdiI6InpJVHZ5bGo0eGFSNzZiMmdpMDZZZ1E9PSIsInZhbHVlIjoiejR3RUdKTThQVHRMa2tHOHdiQlRFeTlNVmtPc3orSUdlV1piUGFuY0FZM0JRRWhmS3dWNjBEVk84YVFHeTZ6eEFFWFY0NWJpczhkRVg5Njl3WjV2Ry9saFZXMklLZlJWNjgvaWRGYXNBNHN0SWRxWFFwaHhmbjNYWWhRSUJMZzkiLCJtYWMiOiIyZjc5MGUwZTRhMDRjMTQzZGM3ZDNlNmM5NjU4MTU0MWY3YWZkOTg2MzMzN2M3MjU3MzZiMWRkZDJjNTk1MmM5IiwidGFnIjoiIn0="
+          Path: "/"
+        - Name: "XSRF-TOKEN"
+          Domain: "newmfx.com"
+          Value: "eyJpdiI6Inh1amgzblRna2M5N2xNdjJpQWxvYWc9PSIsInZhbHVlIjoiaUFubkNQV0FacWNLYWVOTmVuVUlQTk1GeG5jVmEyTmVPa2VlUmJUZklUQWkwd3h2SExCYTFtUkpCdC9mekVjeGE4U0FNSDVMR29LVmg0NjdweDNSWFl6WFlaNWdWdWpVZUZzTDYyOGxjT2NQMXo4eUpIVHlPZFZmVWFTeVdIdUMiLCJtYWMiOiJkNDIxMDY0OTZhMjUyZmI2NDRlZDNmOTNiZjk5MWY4MjEyNmYxYjI5OGMyY2JjNDYzM2NiZTAyMTk3YTY4ODQyIiwidGFnIjoiIn0="
+          Path: "/"
+
+xPathScrapers:
+  performerSearch:
+    common:
+      # Every scene card on the search results page lists performers in .slidetext-category
+      $castLinks: //div[contains(@class,'slidetext-category')]//a[contains(@href, '/cast/')]
+    performer:
+      Name:
+        selector: $castLinks
+        postProcess:
+          - replace:
+              - regex: '^\s+|\s+$'
+                with: ""
+      URL: $castLinks/@href
+
+  performerScraper:
+    common:
+      $profile: //section[contains(@class, 'data-cast')]
+      $stats: $profile//div[contains(@class, 'topics-cast')]/ul/li
+    performer:
+      Name: //div[contains(@class, 'box-title-video')]/h1/text()
+      Image: $profile//div[@class='box-image']/img/@src
+      Height:
+        selector: $stats[strong[contains(text(), 'Height')]]/text()[normalize-space()]
+        postProcess:
+          - replace:
+              - regex: '(\d+)\s*cm.*'
+                with: $1
+      Weight:
+        selector: $stats[strong[contains(text(), 'Weight')]]/text()[normalize-space()]
+        postProcess:
+          - replace:
+              - regex: '(\d+)\s*kg.*'
+                with: $1
+      HairColor:
+        selector: $stats[strong[contains(text(), 'Hair Color')]]/text()[normalize-space()]
+        postProcess:
+          - replace:
+              - regex: '^\s*:\s*'
+                with: ""
+      EyeColor:
+        selector: $stats[strong[contains(text(), 'Eyes Color')]]/text()[normalize-space()]
+        postProcess:
+          - replace:
+              - regex: '^\s*:\s*'
+                with: ""
+      Tattoos:
+        selector: $stats[strong[contains(text(), 'Tatoo')]]/text()[normalize-space()]
+        postProcess:
+          - replace:
+              - regex: '^\s*:\s*'
+                with: ""
+      Details:
+        selector: $stats
+        concat: " | "
+        postProcess:
+          - replace:
+              - regex: '\s+'
+                with: " "
+
+debug:
+  printHTML: true

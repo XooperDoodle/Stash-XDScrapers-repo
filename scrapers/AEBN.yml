@@ -1,0 +1,191 @@
+name: AEBN
+
+# Search by Name (Scene capability)
+sceneByName:
+  action: scrapeXPath
+  queryURL: https://straight.aebn.com/straight/search?query={}&type=movie
+  scraper: sceneSearch
+
+# Search by Fragment (Secondary search / Detail fetch)
+sceneByQueryFragment:
+  action: scrapeXPath
+  queryURL: "{url}"
+  scraper: sceneScraper
+
+# Scrape by Fragment (Filename/Title search)
+sceneByFragment:
+  action: scrapeXPath
+  queryURL: https://straight.aebn.com/straight/search?query={title}&type=movie
+  scraper: sceneSearch
+
+# Scrape by URL (URL capability)
+sceneByURL:
+  - action: scrapeXPath
+    url:
+      - straight.aebn.com/straight/movies/
+      - straight.aebn.com/straight/scenes/
+      - gay.aebn.com/gay/movies/
+      - gay.aebn.com/gay/scenes/
+    scraper: sceneScraper
+
+# Group scraping
+groupByURL:
+  - action: scrapeXPath
+    url:
+      - straight.aebn.com/straight/movies/
+      - gay.aebn.com/gay/movies/
+    scraper: groupScraper
+
+xPathScrapers:
+  sceneSearch:
+    common:
+      $searchResult: //div[contains(@class, "dts-grid-item")]
+    scene:
+      Title:
+        selector: $searchResult//a[contains(@href, "/movies/")]/@title
+      URL:
+        selector: $searchResult//a[contains(@href, "/movies/")]/@href
+        postProcess:
+          - replace:
+              - regex: ^(?!https?://)
+                with: "https://straight.aebn.com"
+
+  sceneScraper:
+    common:
+      $movieInfo: //section[contains(@class, "dts-section-page-detail-info-movie")]
+    scene:
+      Title:
+        selector: //*[@class="dts-section-page-heading-title"]/h1/text()
+        postProcess:
+          - replace:
+              - regex: '^\s+|\s+$'
+                with: ""
+      Details:
+        selector: //*[@class="dts-section-page-detail-description-body"]/text()
+        concat: "\n"
+        postProcess:
+          - replace:
+              - regex: '^\s+|\s+$'
+                with: ""
+      Date:
+        selector: //span[@class="section-detail-list-item-title" and contains(text(), "Released")]/following-sibling::text()
+        postProcess:
+          - replace:
+              - regex: '^\s+|\s+$'
+                with: ""
+      Studio:
+        Name:
+          selector: //*[@class="section-detail-list-item-studio"]/a/text()
+          postProcess:
+            - replace:
+                - regex: '^\s+|\s+$'
+                  with: ""
+        URL:
+          selector: //*[@class="section-detail-list-item-studio"]/a/@href
+          postProcess:
+            - replace:
+                - regex: ^(?!https?://)
+                  with: "https://straight.aebn.com"
+      Performers:
+        Name:
+          selector: $movieInfo//div[@class="dts-detail-movie-stars"]//@title
+      Image:
+        selector: //*[@class="dts-movie-boxcover-front"]//img/@src
+        postProcess:
+          - replace:
+              - regex: "^//"
+                with: "https://"
+          - replace:
+              - regex: '\?.*$'
+                with: ""
+      Code:
+        fixed: "{inputURL}"
+        postProcess:
+          - replace:
+              - regex: '.*/movies/(\d+).*'
+                with: "$1"
+      Tags:
+        Name:
+          selector: //*[@class="dts-detail-movie-categories-content"]//a/text()
+          postProcess:
+            - replace:
+                - regex: '^\s+|\s+$'
+                  with: ""
+
+  groupScraper:
+    group:
+      Name:
+        selector: //*[@class="dts-section-page-heading-title"]/h1/text()
+        postProcess:
+          - replace:
+              - regex: '^\s+|\s+$'
+                with: ""
+      Synopsis:
+        selector: //*[@class="dts-section-page-detail-description-body"]/text()
+        concat: "\n"
+        postProcess:
+          - replace:
+              - regex: '^\s+|\s+$'
+                with: ""
+      Date:
+        selector: //span[@class="section-detail-list-item-title" and contains(text(), "Released")]/following-sibling::text()
+        postProcess:
+          - replace:
+              - regex: '^\s+|\s+$'
+                with: ""
+      Studio:
+        Name:
+          selector: //*[@class="section-detail-list-item-studio"]/a/text()
+          postProcess:
+            - replace:
+                - regex: '^\s+|\s+$'
+                  with: ""
+        URL:
+          selector: //*[@class="section-detail-list-item-studio"]/a/@href
+          postProcess:
+            - replace:
+                - regex: ^(?!https?://)
+                  with: "https://straight.aebn.com"
+      FrontImage:
+        selector: //*[@class="dts-movie-boxcover-front"]//img/@src
+        postProcess:
+          - replace:
+              - regex: "^//"
+                with: "https://"
+          - replace:
+              - regex: '\?.*$'
+                with: ""
+      BackImage:
+        selector: //*[@class="dts-movie-boxcover-background"]//img/@src
+        postProcess:
+          - replace:
+              - regex: "^//"
+                with: "https://"
+          - replace:
+              - regex: '\?.*$'
+                with: ""
+      Duration:
+        selector: //*[@class="section-detail-list-item-duration"][2]/text()
+        postProcess:
+          - replace:
+              - regex: '^\s+|\s+$'
+                with: ""
+          - replace:
+              - regex: '(\d+:\d+:\d+).*'
+                with: "$1"
+      Tags:
+        Name:
+          selector: //*[@class="dts-detail-movie-categories-content"]//a/text()
+          postProcess:
+            - replace:
+                - regex: '^\s+|\s+$'
+                  with: ""
+      URLs:
+        fixed: "{inputURL}"
+
+driver:
+  useCDP: true
+  sleep: 3
+
+debug:
+  printHTML: true
